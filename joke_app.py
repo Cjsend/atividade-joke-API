@@ -1,31 +1,47 @@
-import requests  # Para consumir a API
+import requests
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
 from kivy.uix.label import Label
-
-class JokeBox(BoxLayout):
-    def __init__(self, **kwargs):
-        super().__init__(orientation='vertical', **kwargs)
-        self.label = Label(text="Clique no botão para ver uma piada!", font_size=20)
-        self.add_widget(self.label)
-        self.button = Button(text="Nova piada", size_hint=(1, 0.2), font_size=18)
-        self.button.bind(on_release=self.show_joke)
-        self.add_widget(self.button)
-
-    def show_joke(self, instance):
-        try:
-            response = requests.get("https://official-joke-api.appspot.com/random_joke")
-            joke = response.json()
-            setup = joke.get('setup', '')
-            punchline = joke.get('punchline', '')
-            self.label.text = f"{setup}\n\n{punchline}"
-        except Exception as e:
-            self.label.text = "Erro ao carregar piada."
+from kivy.uix.button import Button
 
 class JokeApp(App):
     def build(self):
-        return JokeBox()
+        self.layout = BoxLayout(orientation='vertical', padding=20, spacing=20)
+        self.joke_label = Label(
+            text = "Clique no botão para ver uma piada!",
+            halign = "center",
+            valign = "middle",
+            font_size = 20
+        )
+        self.joke_label.bind(size=self.joke_label.setter('text_size'))
 
-if __name__ == '__main__':
+        self.button = Button(
+            text = "Nova piada",
+            size_hint = (1, 0.2),
+            font_size = 18
+        )
+
+        self.button.bind(on_press = self.get_joke)
+        self.layout.add_widget(self.joke_label)
+        self.layout.add_widget(self.button)
+        return self.layout
+    
+    class JokeApp(App):
+
+    def get_joke(self, instance):
+        try:
+            url = "https://official-joke-api.appsp.com/random_joke"
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                joke = response.json()
+                setup = joke.get("setup", "")
+                punchline = joke.get("punchline", "")
+                self.joke_label.text = f"{setup}\n\n{punchline}"
+            else:
+                    self.joke_label.text = "Erro ao carregar piada"
+
+        except Exception as e:
+            self.joke_label.text = f"Erro: {e}"
+
+if __name__ == "__main__":
     JokeApp().run()
